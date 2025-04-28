@@ -2,8 +2,8 @@ name: Deploy my-dotnet8-webapi
 
 on:
   push:
-    paths:
-      - './my-dotnet8-webapi/**'
+    branches:
+      - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
