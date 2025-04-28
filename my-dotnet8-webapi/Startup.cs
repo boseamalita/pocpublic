@@ -7,7 +7,8 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        // Add services to the container.
+        services.AddAuthorization();
+        services.AddControllers(); // Or AddMvc() if using MVC  
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
