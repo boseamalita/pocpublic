@@ -1,9 +1,7 @@
 name: Deploy Web API Infrastructure
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   deploy:
@@ -26,4 +24,4 @@ jobs:
             --parameters appServicePlanName=app-cospapi-case-pocpublic \
                         webAppName=app-cospapi-case-pocpublic \
                         repoUrl=https://github.com/boseamalita/pocpublic.git \
-                        branch=main \
+                        branch=main
