@@ -10,7 +10,7 @@ namespace my_dotnet8_webapi.Controllers
     {
         private static readonly string[] Summaries = new[]
         {
-            "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            "Bracing", "Chill", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
         [HttpGet]
