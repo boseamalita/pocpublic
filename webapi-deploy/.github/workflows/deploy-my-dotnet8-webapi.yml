@@ -3,7 +3,8 @@ name: Deploy my-dotnet8-webapi
 on:
   push:
     branches:
-      - main
+      - main # Trigger on pushes to the main branch
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   deploy:
