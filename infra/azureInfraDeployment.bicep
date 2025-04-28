@@ -19,9 +19,6 @@ param skuName string = 'B1'
 @description('Azure App Service SKU capacity')
 param skuCapacity int = 1
 
-@description('personal_access_token for authentication')
-param PAT string
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: appServicePlanName
   location: location
