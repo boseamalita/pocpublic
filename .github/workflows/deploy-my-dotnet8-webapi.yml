@@ -2,10 +2,8 @@ name: Deploy my-dotnet8-webapi
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'my-dotnet8-webapi/**'
+  workflow_dispatch: # Allows manual triggering of the workflow
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

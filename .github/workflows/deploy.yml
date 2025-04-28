@@ -2,8 +2,8 @@ name: Deploy Web API Infrastructure
 
 on:
   push:
-    paths:
-      - 'infra/**'
+    branches:
+      - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
