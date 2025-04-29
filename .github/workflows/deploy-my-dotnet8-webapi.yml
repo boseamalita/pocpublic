@@ -7,7 +7,7 @@ permissions:
       contents: read
 
 env:
-  AZURE_WEBAPP_NAME: my-dotnet8-webapi    # Set this to your application's name
+  AZURE_WEBAPP_NAME: app-cospapi-case-pocpublic    # Set this to your application's name
   AZURE_WEBAPP_PACKAGE_PATH: './my-dotnet8-webapi'     # Update this to the correct path to your project
   DOTNET_VERSION: '8.0.x'                # Set this to the dot net version to use
 
@@ -41,7 +41,7 @@ jobs:
         uses: azure/webapps-deploy@v3
         with: 
           app-name: ${{ env.AZURE_WEBAPP_NAME }} # Replace with your app name
-          package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/my-dotnet8-webapi'
+          package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/app-cospapi-case-pocpublic'
       
       - name: logout
         run: |
