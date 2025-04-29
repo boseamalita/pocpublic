@@ -16,7 +16,7 @@ inputs:
   project-folder-path:
     description: 'Project file folder path'
     required: true
-    default: 'pocpublic/my-dotnet8-webapi'
+    default: 'my-dotnet8-webapi'
 
 runs:
   using: composite

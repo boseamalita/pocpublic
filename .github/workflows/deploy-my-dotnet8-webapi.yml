@@ -19,7 +19,7 @@ env:
   AZURE_WEBAPP_STARTUP_COMMAND: 'dotnet exec my-dotnet8-webapi.dll'
   BUILD_CONFIGURATION: 'Release'
   DOTNET_VERSION: '8.x'
-  PROJECT_FOLDER_PATH: 'pocpublic/my-dotnet8-webapi'
+  PROJECT_FOLDER_PATH: 'my-dotnet8-webapi'
   PROJECT_FILE: 'my-dotnet8-webapi.csproj'
 
 jobs:
