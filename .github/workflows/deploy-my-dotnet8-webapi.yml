@@ -7,7 +7,7 @@ permissions:
       contents: read
 
 env:
-  AZURE_WEBAPP_NAME: app-cospapi-case-pocpublic    # Set this to your application's name
+  AZURE_WEBAPP_NAME: app-cospapi-case-pocpublic01    # Set this to your application's name
   AZURE_WEBAPP_PACKAGE_PATH: './my-dotnet8-webapi'     # Update this to the correct path to your project
   DOTNET_VERSION: '8.0.x'                # Set this to the dot net version to use
 
