@@ -1,90 +1,48 @@
-name: Deploy my-dotnet8-webapi
+name: .NET Core
 
-run-name: Build and Deploy CoSP WebApi from ${{ github.ref_type }} ${{ github.ref_name }}
+on: [push]
 
-on: 
-  workflow_dispatch:
-    inputs:
-      environment:
-        required: true
-        description: Target environment for deployment
-        type: choice
-        options:
-          - dev
+permissions:
+      id-token: write
+      contents: read
 
 env:
-  APP_PACKAGE_NAME: 'my-dotnet8-webapi'
-  AZURE_WEBAPP_NAME_DEV: 'my-dotnet8-webapi'
-  AZURE_RESOURCE_GROUP_NAME_DEV: 'POC'
-  AZURE_WEBAPP_STARTUP_COMMAND: 'dotnet exec my-dotnet8-webapi.dll'
-  BUILD_CONFIGURATION: 'Release'
-  DOTNET_VERSION: '8.x'
-  PROJECT_FOLDER_PATH: 'my-dotnet8-webapi'
-  PROJECT_FILE: 'my-dotnet8-webapi.csproj'
+  AZURE_WEBAPP_NAME: my-dotnet8-webapi    # Set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: '.'      # Set this to the path to your web app project, defaults to the repository root
+  DOTNET_VERSION: '8.0.x'           # Set this to the dot net version to use
 
 jobs:
-  build-and-publish:
-    name: Build and Publish
+  build:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Build Web API project
-      uses: ./.github/actions/build-web-api
-      with:
-        build-configuration: ${{ env.BUILD_CONFIGURATION }}
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-        project-file: ${{ env.PROJECT_FILE }}
-        project-folder-path: ${{ env.PROJECT_FOLDER_PATH }}
-    
-    - name: Archive files for deployment
-      run: |
-        cd ${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}
-        zip -r ../${{ env.APP_PACKAGE_NAME }}.zip .
-    
-    - name: List files for debugging
-      run: ls -R ${{ env.PROJECT_FOLDER_PATH }}
-
-    - name: Debug File Paths
-      run: |
-        echo "Checking for ZIP file..."
-        ls -l ${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}
-
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v3.1.3
-      with:
-        name: ${{ env.APP_PACKAGE_NAME }}
-        path: ${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}/${{ env.APP_PACKAGE_NAME }}.zip
-        if-no-files-found: warn
-
-  deploy-to-dev:
-    name: Deploy to Dev environment
-    needs: [ build-and-publish ]
-    runs-on: ubuntu-latest
-    if: ${{ inputs.environment == 'dev' }}
-    # environment: dev
-    #permissions:
-      #id-token: write
-      #contents: read
-    steps:
-    - name: Download Build Artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: ${{ env.APP_PACKAGE_NAME }}
-
-    - name: Az Login
-      uses: azure/login@v1
-      with:
+      # Check out the repo
+      - uses: actions/checkout@main
+      - uses: azure/login@v2
+        with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-    - name: Deploy to Azure WebApp
-      uses: Azure/webapps-deploy@v3.0.0
-      with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME_DEV }}
-        package: ${{ env.APP_PACKAGE_NAME }}.zip
-        resource-group-name: ${{ env.AZURE_RESOURCE_GROUP_NAME_DEV }}
-        startup-command: ${{ env.AZURE_WEBAPP_STARTUP_COMMAND }}
-        type: ZIP
-        restart: true
 
+      
+      # Setup .NET Core SDK
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }} 
+      
+      # Run dotnet build and publish
+      - name: dotnet build and publish
+        run: |
+          dotnet restore
+          dotnet build --configuration Release
+          dotnet publish -c Release --property:PublishDir='${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/myapp' 
+          
+      # Deploy to Azure Web apps
+      - name: 'Run Azure webapp deploy action using publish profile credentials'
+        uses: azure/webapps-deploy@v3
+        with: 
+          app-name: ${{ env.AZURE_WEBAPP_NAME }} # Replace with your app name
+          package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/myapp'
+      
+      - name: logout
+        run: |
+          az logout
