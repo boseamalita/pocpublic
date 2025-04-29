@@ -1,9 +1,8 @@
 name: Deploy Web API Infrastructure
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: # Allows manual triggering of the workflow
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

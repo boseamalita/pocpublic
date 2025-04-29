@@ -27,7 +27,9 @@ jobs:
         run: dotnet publish my-dotnet8-webapi/my-dotnet8-webapi.csproj --configuration Release --output ./publish
 
       - name: Archive files for deployment
-        run: zip -r my-dotnet8-webapi.zip ./publish
+        run: |
+          cd ./publish
+          zip -r ../my-dotnet8-webapi.zip ./*
 
       - name: Log in to Azure
         uses: azure/login@v1
