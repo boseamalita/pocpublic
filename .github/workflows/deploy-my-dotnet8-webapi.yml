@@ -40,8 +40,8 @@ jobs:
     
     - name: Archive files for deployment
       run: |
-        cd ./${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}
-        zip -r ./${{ env.APP_PACKAGE_NAME }}.zip .
+        cd ${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}
+        zip -r ../${{ env.APP_PACKAGE_NAME }}.zip .
     
     - name: List files for debugging
       run: ls -R ${{ env.PROJECT_FOLDER_PATH }}
@@ -49,13 +49,13 @@ jobs:
     - name: Debug File Paths
       run: |
         echo "Checking for ZIP file..."
-        ls -l ./${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}
+        ls -l ${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v3.1.3
       with:
         name: ${{ env.APP_PACKAGE_NAME }}
-        path: ./${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}/${{ env.APP_PACKAGE_NAME }}.zip
+        path: ${{ env.PROJECT_FOLDER_PATH }}/publish/${{ env.BUILD_CONFIGURATION }}/${{ env.APP_PACKAGE_NAME }}.zip
         if-no-files-found: warn
 
   deploy-to-dev:
