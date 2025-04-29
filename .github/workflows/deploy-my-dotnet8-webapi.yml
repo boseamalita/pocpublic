@@ -34,13 +34,19 @@ jobs:
           cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
           dotnet restore
           dotnet build --configuration Release
-          dotnet publish -c Release --property:PublishDir='${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/app-cospapi-case-pocpublic' 
+          mkdir -p app-cospapi-case-pocpublic  # Ensure the directory exists
+          dotnet publish -c Release --output app-cospapi-case-pocpublic
+      
+      # Debugging step to ensure files exist
+      - name: Debug - List Published Files
+        run: |
+          ls -la ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/app-cospapi-case-pocpublic
       
       # Deploy to Azure Web apps
       - name: 'Run Azure webapp deploy action using publish profile credentials'
         uses: azure/webapps-deploy@v3
         with: 
-          app-name: ${{ env.AZURE_WEBAPP_NAME }} # Replace with your app name
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/app-cospapi-case-pocpublic'
       
       - name: logout
