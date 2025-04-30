@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the repo
+      # Check out the
       - uses: actions/checkout@main
       - uses: azure/login@v2
         with:
