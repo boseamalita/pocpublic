@@ -20,7 +20,9 @@ jobs:
       - uses: actions/checkout@main
       - uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_8CDB4B14E9F143C08C123D9DA20DC52B }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0333DBF453E14A7085FBE5F0340EC9B9 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9CEA50D29A4648CDAB4F4BE360A3CE68 }}
 
       # Setup .NET Core SDK
       - name: Setup .NET Core
