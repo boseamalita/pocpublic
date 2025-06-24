@@ -26,7 +26,7 @@ env:
 jobs:
   deploy-to-target-environment:
     name: Deploy to ${{ github.event.inputs.environment }} environment
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, ubuntu-latest]
     environment: ${{ github.event.inputs.environment }}
     #permissions:
       #id-token: write
