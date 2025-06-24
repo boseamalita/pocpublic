@@ -1,6 +1,7 @@
 name: .NET Core
 
-on: [push]
+on:
+  workflow_dispatch:
 
 permissions:
       id-token: write
