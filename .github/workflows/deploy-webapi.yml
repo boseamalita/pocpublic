@@ -28,9 +28,9 @@ jobs:
     name: Deploy to ${{ github.event.inputs.environment }} environment
     runs-on: [self-hosted, linux]
     environment: ${{ github.event.inputs.environment }}
-    permissions:
-      id-token: write
-      contents: read
+    #permissions:
+      #id-token: write
+      #contents: read
 
     steps:
       - name: Set Target Environment tag
@@ -43,10 +43,10 @@ jobs:
             *)           echo "Unknown environment"; exit 1;;
           esac
 
-      - name: Cleanup workspace
-        run: |
-          rm -rf ./* || true
-          rm -rf ./.??* || true
+      #- name: Cleanup workspace
+        #run: |
+          #rm -rf ./* || true
+          #rm -rf ./.??* || true
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -89,7 +89,6 @@ jobs:
         with: 
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: '${{ env.FOLDER_WEBAPP }}/${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}'
-          slot-name: 'slota'
       
       - name: Confirm deployment
         run: |
