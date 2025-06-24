@@ -18,7 +18,7 @@ permissions:
       contents: read
 
 env:
-  AZURE_WEBAPP_NAME: app-cospapi-case-pocpublic01    # Set this to your application's name
+  AZURE_WEBAPP_NAME: app-cospapi-case-pocpublic    # Set this to your application's name
   DOTNET_VERSION: '8.0.x'  
   PATH_REPO:  ./
   FOLDER_WEBAPP: my-dotnet8-webapi
