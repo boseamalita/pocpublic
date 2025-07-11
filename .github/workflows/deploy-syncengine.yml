@@ -1,0 +1,86 @@
+name: Deploy Azure Function App
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - Development
+          - Testing
+          - Acceptance
+          - Production
+
+env:
+  PATH_REPO: ./
+  FOLDER_FUNCTION: my-powershell-function
+  FUNCTION_APP_NAME_PREFIX: fatestpoc
+
+jobs:
+  deploy-to-target-environment:
+    name: Deploy to ${{ github.event.inputs.environment }} environment
+    runs-on: [self-hosted, linux]
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Set Target Environment tag
+        run: |
+          case "${{ github.event.inputs.environment }}" in
+            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+            Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+            *)           echo "Unknown environment"; exit 1;;
+          esac
+
+      - name: Cleanup workspace
+        run: |
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.PATH_REPO }}
+          lfs: false
+
+      - name: Verify .NET SDK
+        run: |
+          command -v dotnet >/dev/null 2>&1 || { echo ".NET SDK not found; install on runner"; exit 1; }
+          dotnet --version
+
+      - name: Verify Core Tools
+        run: |
+          command -v func >/dev/null 2>&1 || { echo "Azure Functions Core Tools not found; install on runner"; exit 1; }
+          func --version
+
+      - name: Az Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: Build project
+        working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
+        run: |
+          dotnet clean
+          dotnet build --configuration Release
+
+      - name: Publish to Azure
+        working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
+        run: |
+          APP_NAME="${{ env.FUNCTION_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }}"
+          func azure functionapp publish "$APP_NAME"
+        env:
+          AzureWebJobsScriptRoot: "."
+
+      - name: Confirm deployment
+        run: |
+          echo "Deployed to Function App: ${{ env.FUNCTION_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }}"
