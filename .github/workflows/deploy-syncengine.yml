@@ -67,11 +67,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
 
-      - name: Build project
-        working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
-        run: |
-          dotnet clean
-          dotnet build --configuration Release
+      #- name: Build project
+        #working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
+        #run: |
+          #dotnet clean
+          #dotnet build --configuration Release
 
       - name: Publish to Azure
         working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
