@@ -1,0 +1,68 @@
+name: Deploy Azure Logic App
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - Development
+          - Testing
+          - Acceptance
+          - Production
+
+env:
+  PATH_REPO: ./
+  LOGIC_APP_NAME_PREFIX: lapoctest01
+  RESOURCE_GROUP_NAME_PREFIX: poc
+
+jobs:
+  deploy-to-target-environment:
+    name: Deploy to ${{ github.event.inputs.environment }} environment
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Set Target Environment tag
+        run: |
+          case "${{ github.event.inputs.environment }}" in
+            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+            Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+            *)           echo "Unknown environment"; exit 1;;
+          esac
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # If deploying with ARM/Bicep template
+      - name: Deploy Logic App (ARM/Bicep)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ env.LOGIC_APP_NAME_PREFIX }}
+          template: ./path/to/logicapp-template.bicep # or .json for ARM
+          parameters: |
+            logicAppName=${{ env.LOGIC_APP_NAME_PREFIX }}
+            # Add other parameters as needed
+
+      # If deploying Logic App Standard (code-based), use Azure CLI to deploy code
+      # - name: Deploy Logic App Standard code
+      #   run: |
+      #     az logicapp deployment source config-zip \
+      #       --name ${{ env.LOGIC_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }} \
+      #       --resource-group ${{ env.LOGIC_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }}-rg \
+      #       --src ./path/to/your/logicapp.zip
