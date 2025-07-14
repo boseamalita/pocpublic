@@ -17,6 +17,7 @@ env:
   PATH_REPO: ./
   LOGIC_APP_NAME_PREFIX: lapoctest01
   RESOURCE_GROUP_NAME_PREFIX: poc
+  LOGIC_APP_CODE_PATH: ./logic-app-code/FileConversion.zip
 
 jobs:
   deploy-to-target-environment:
@@ -49,20 +50,20 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # If deploying with ARM/Bicep template
-      - name: Deploy Logic App (ARM/Bicep)
-        uses: azure/arm-deploy@v2
-        with:
-          scope: resourcegroup
-          resourceGroupName: ${{ env.RESOURCE_GROUP_NAME_PREFIX }}
-          template: ./path/to/logicapp-template.bicep # or .json for ARM
-          parameters: |
-            logicAppName=${{ env.LOGIC_APP_NAME_PREFIX }}
+      #- name: Deploy Logic App (ARM/Bicep)
+        #uses: azure/arm-deploy@v2
+        #with:
+          #scope: resourcegroup
+          #resourceGroupName: ${{ env.RESOURCE_GROUP_NAME_PREFIX }}
+          #template: ./path/to/logicapp-template.bicep # or .json for ARM
+          #parameters: |
+            #logicAppName=${{ env.LOGIC_APP_NAME_PREFIX }}
             # Add other parameters as needed
 
       # If deploying Logic App Standard (code-based), use Azure CLI to deploy code
-      # - name: Deploy Logic App Standard code
-      #   run: |
-      #     az logicapp deployment source config-zip \
-      #       --name ${{ env.LOGIC_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }} \
-      #       --resource-group ${{ env.LOGIC_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }}-rg \
-      #       --src ./path/to/your/logicapp.zip
+      - name: Deploy Logic App Standard code
+        run: |
+          az logicapp deployment source config-zip \
+            --name ${{ env.LOGIC_APP_NAME_PREFIX }} \
+            --resource-group ${{ env.RESOURCE_GROUP_NAME_PREFIX }} \
+            --src ${{ env.LOGIC_APP_CODE_PATH }}
