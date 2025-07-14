@@ -81,11 +81,11 @@ jobs:
       - name: Publish to Azure
         working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
         run: |
-          APP_NAME="${{ env.FUNCTION_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }}"
+          APP_NAME="${{ env.FUNCTION_APP_NAME_PREFIX }}"
           func azure functionapp publish "$APP_NAME"
         env:
           AzureWebJobsScriptRoot: "."
 
       - name: Confirm deployment
         run: |
-          echo "Deployed to Function App: ${{ env.FUNCTION_APP_NAME_PREFIX }}-${{ env.TARGET_ENV_SHORT }}"
+          echo "Deployed to Function App: ${{ env.FUNCTION_APP_NAME_PREFIX }}"
