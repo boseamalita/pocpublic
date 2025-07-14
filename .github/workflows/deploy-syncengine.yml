@@ -54,10 +54,10 @@ jobs:
           command -v dotnet >/dev/null 2>&1 || { echo ".NET SDK not found; install on runner"; exit 1; }
           dotnet --version
 
-      - name: Verify Core Tools
-        run: |
-          command -v func >/dev/null 2>&1 || { echo "Azure Functions Core Tools not found; install on runner"; exit 1; }
-          func --version
+      #- name: Verify Core Tools
+        #run: |
+          #command -v func >/dev/null 2>&1 || { echo "Azure Functions Core Tools not found; install on runner"; exit 1; }
+          #func --version
 
       - name: Az Login
         uses: azure/login@v2
