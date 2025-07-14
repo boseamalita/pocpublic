@@ -56,11 +56,12 @@ jobs:
 
       - name: Install Azure Functions Core Tools
         run: |
-          sudo npm install -g azure-functions-core-tools@4 --unsafe-perm true#- name: Verify Core Tools
-        
-        #run: |
-          #command -v func >/dev/null 2>&1 || { echo "Azure Functions Core Tools not found; install on runner"; exit 1; }
-          #func --version
+          npm install -g azure-functions-core-tools@4 --unsafe-perm true
+      
+      - name: Verify Core Tools
+        run: |
+          command -v func >/dev/null 2>&1 || { echo "Azure Functions Core Tools not found; install on runner"; exit 1; }
+          func --version
 
       - name: Az Login
         uses: azure/login@v2
@@ -75,6 +76,7 @@ jobs:
         #run: |
           #dotnet clean
           #dotnet build --configuration Release
+
       
       - name: Publish to Azure
         working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
