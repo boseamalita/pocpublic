@@ -53,7 +53,7 @@ jobs:
         uses: azure/arm-deploy@v2
         with:
           scope: resourcegroup
-          resourceGroupName: ${{ env.LOGIC_APP_NAME_PREFIX }}
+          resourceGroupName: ${{ env.RESOURCE_GROUP_NAME_PREFIX }}
           template: ./path/to/logicapp-template.bicep # or .json for ARM
           parameters: |
             logicAppName=${{ env.LOGIC_APP_NAME_PREFIX }}
