@@ -82,7 +82,7 @@ jobs:
         working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
         run: |
           APP_NAME="${{ env.FUNCTION_APP_NAME_PREFIX }}"
-          func azure functionapp publish "$APP_NAME"
+          func azure functionapp publish "$APP_NAME" --powershell
         env:
           AzureWebJobsScriptRoot: "."
 
