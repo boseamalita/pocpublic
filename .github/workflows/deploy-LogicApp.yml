@@ -17,7 +17,7 @@ env:
   PATH_REPO: ./
   LOGIC_APP_NAME_PREFIX: lapoctest01
   RESOURCE_GROUP_NAME_PREFIX: poc
-  LOGIC_APP_PATH: ./logic-app-code/FileConversion
+  LOGIC_APP_PATH: FileConversion
 
 jobs:
   deploy-to-target-environment:
