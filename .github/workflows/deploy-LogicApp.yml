@@ -72,4 +72,4 @@ jobs:
           az logicapp deployment source config-zip \
             --name ${{ env.LOGIC_APP_NAME_PREFIX }} \
             --resource-group ${{ env.RESOURCE_GROUP_NAME_PREFIX }} \
-            --src workflow.zip
+            --src ${{ env.LOGIC_APP_PATH }}/workflow.zip
