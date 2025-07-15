@@ -63,7 +63,7 @@ jobs:
       - name: Build Logic App code
         run: |
           cd ${{ env.LOGIC_APP_PATH }}
-          zip -r workflow.zip ./${{ env.LOGIC_APP_PATH }}
+          zip -r workflow.zip ${{ env.LOGIC_APP_PATH }}
         #zip -r workflow.zip ${{ env.PATH_REPO }}/${{ env.LOGIC_APP_PATH }}/*
       
       # If deploying Logic App Standard (code-based), use Azure CLI to deploy code
@@ -72,4 +72,4 @@ jobs:
           az logicapp deployment source config-zip \
             --name ${{ env.LOGIC_APP_NAME_PREFIX }} \
             --resource-group ${{ env.RESOURCE_GROUP_NAME_PREFIX }} \
-            --src ./${{ env.LOGIC_APP_PATH }}/workflow.zip
+            --src ${{ env.LOGIC_APP_PATH }}/workflow.zip
