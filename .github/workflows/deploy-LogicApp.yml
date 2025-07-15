@@ -17,7 +17,8 @@ env:
   PATH_REPO: ./
   LOGIC_APP_NAME_PREFIX: lapoctest01
   RESOURCE_GROUP_NAME_PREFIX: poc
-  LOGIC_APP_PATH: FileConversion
+  LOGIC_APP: FileConversion
+  PROJECT_FOLDER_PATH: CoSP.FileServices
 
 jobs:
   deploy-to-target-environment:
@@ -62,7 +63,8 @@ jobs:
 
       - name: Build Logic App code
         run: |
-          zip -r workflow.zip ${{ env.LOGIC_APP_PATH }}
+          cd ${{ env.PROJECT_FOLDER_PATH }}/${{ env.LOGIC_APP }}
+          zip -r ../workflow.zip .
         #zip -r workflow.zip ${{ env.PATH_REPO }}/${{ env.LOGIC_APP_PATH }}/*
       
       # If deploying Logic App Standard (code-based), use Azure CLI to deploy code
@@ -71,4 +73,4 @@ jobs:
           az logicapp deployment source config-zip \
             --name ${{ env.LOGIC_APP_NAME_PREFIX }} \
             --resource-group ${{ env.RESOURCE_GROUP_NAME_PREFIX }} \
-            --src ${{ env.LOGIC_APP_PATH }}/workflow.zip
+            --src ${{ env.PROJECT_FOLDER_PATH }}/workflow.zip
