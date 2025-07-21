@@ -13,7 +13,7 @@ azure:
   function_app_resource_group: POC
 
   # Logic App configuration
-  logic_app_name: lapoctest01-dev
+  logic_app_name: lapoctest01
   logic_app_resource_group: POC
   logic_app_workflow_name: FileConversion
   
