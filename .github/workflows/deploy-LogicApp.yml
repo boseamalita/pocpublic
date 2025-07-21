@@ -13,11 +13,12 @@ on:
           - Acceptance
           - Production
 
+permissions:
+      id-token: write
+      contents: read
+
 env:
   PATH_REPO: ./
-  LOGIC_APP_NAME_PREFIX: lapoctest01
-  RESOURCE_GROUP_NAME_PREFIX: poc
-  LOGIC_APP: FileConversion
   PROJECT_FOLDER_PATH: CoSP.LogicApps
 
 jobs:
@@ -30,18 +31,63 @@ jobs:
       contents: read
 
     steps:
-      - name: Set Target Environment tag
-        run: |
-          case "${{ github.event.inputs.environment }}" in
-            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
-            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
-            Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
-            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
-            *)           echo "Unknown environment"; exit 1;;
-          esac
-
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          path: ${{ env.PATH_REPO }}
+          lfs: false
+
+      - name: Load Environment Configuration
+        id: config
+        run: |
+          ENV_LOWER=$(echo "${{ github.event.inputs.environment }}" | tr '[:upper:]' '[:lower:]')
+          CONFIG_FILE="${{ env.PATH_REPO }}/.github/config/${ENV_LOWER}.yml"
+          
+          echo "Loading configuration from: $CONFIG_FILE"
+          
+          if [ -f "$CONFIG_FILE" ]; then
+            echo "✅ Config file found"
+            
+            # Install yq for YAML parsing
+            sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+            sudo chmod +x /usr/local/bin/yq
+            
+            # Extract configuration values
+            LOGIC_APP_NAME=$(yq e '.azure.logic_app_name' "$CONFIG_FILE")
+            RESOURCE_GROUP=$(yq e '.azure.logic_app_resource_group' "$CONFIG_FILE")
+            WORKFLOW_NAME=$(yq e '.azure.logic_app_workflow_name' "$CONFIG_FILE")
+            TARGET_ENV_SHORT=$(yq e '.environment.short_name' "$CONFIG_FILE")
+            ENABLE_HEALTH_CHECK=$(yq e '.deployment.logic_app_deployment.enable_health_check' "$CONFIG_FILE")
+            TIMEOUT_MINUTES=$(yq e '.deployment.logic_app_deployment.timeout_minutes' "$CONFIG_FILE")
+            ENABLE_MONITORING=$(yq e '.deployment.logic_app_deployment.enable_monitoring' "$CONFIG_FILE")
+            
+            echo "LOGIC_APP_NAME=$LOGIC_APP_NAME" >> $GITHUB_ENV
+            echo "RESOURCE_GROUP=$RESOURCE_GROUP" >> $GITHUB_ENV
+            echo "WORKFLOW_NAME=$WORKFLOW_NAME" >> $GITHUB_ENV
+            echo "TARGET_ENV_SHORT=$TARGET_ENV_SHORT" >> $GITHUB_ENV
+            echo "ENABLE_HEALTH_CHECK=$ENABLE_HEALTH_CHECK" >> $GITHUB_ENV
+            echo "TIMEOUT_MINUTES=$TIMEOUT_MINUTES" >> $GITHUB_ENV
+            echo "ENABLE_MONITORING=$ENABLE_MONITORING" >> $GITHUB_ENV
+            
+            echo "✅ Configuration loaded successfully"
+            echo "  - Logic App: $LOGIC_APP_NAME"
+            echo "  - Resource Group: $RESOURCE_GROUP"
+            echo "  - Workflow: $WORKFLOW_NAME"
+            echo "  - Environment: $TARGET_ENV_SHORT"
+          else
+            echo "❌ Config file not found, using fallback configuration"
+            # Fallback to original logic
+            case "${{ github.event.inputs.environment }}" in
+              Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+              Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+              Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+              Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+              *)           echo "Unknown environment"; exit 1;;
+            esac
+            echo "LOGIC_APP_NAME=lapoctest01-$TARGET_ENV_SHORT" >> $GITHUB_ENV
+            echo "RESOURCE_GROUP=poc-$TARGET_ENV_SHORT" >> $GITHUB_ENV
+            echo "WORKFLOW_NAME=FileConversion" >> $GITHUB_ENV
+          fi
 
       - name: Azure Login
         uses: azure/login@v2
@@ -50,28 +96,78 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # If deploying with ARM/Bicep template
-      #- name: Deploy Logic App (ARM/Bicep)
-        #uses: azure/arm-deploy@v2
-        #with:
-          #scope: resourcegroup
-          #resourceGroupName: ${{ env.RESOURCE_GROUP_NAME_PREFIX }}
-          #template: ./path/to/logicapp-template.bicep # or .json for ARM
-          #parameters: |
-            #logicAppName=${{ env.LOGIC_APP_NAME_PREFIX }}
-            # Add other parameters as needed
+      - name: Validate Logic App exists
+        run: |
+          echo "Validating Logic App: ${{ env.LOGIC_APP_NAME }}"
+          
+          if az logicapp show --name "${{ env.LOGIC_APP_NAME }}" --resource-group "${{ env.RESOURCE_GROUP }}" > /dev/null 2>&1; then
+            echo "✅ Logic App exists and is accessible"
+          else
+            echo "❌ Logic App not found or not accessible"
+            echo "Please ensure the Logic App '${{ env.LOGIC_APP_NAME }}' exists in resource group '${{ env.RESOURCE_GROUP }}'"
+            exit 1
+          fi
 
       - name: Build Logic App code
         run: |
+          echo "Building Logic App workflow package"
+          cd ${{ env.PATH_REPO }}/${{ env.PROJECT_FOLDER_PATH }}
+          
           # Create the zip with the correct folder structure
-          # The zip should contain the FileConversion folder and its contents
-          cd ${{ env.PROJECT_FOLDER_PATH }}
-          zip -r workflow.zip ${{ env.LOGIC_APP }}/
-      
-      # If deploying Logic App Standard (code-based), use Azure CLI to deploy code
+          # The zip should contain the workflow folder and its contents
+          if [ -d "${{ env.WORKFLOW_NAME }}" ]; then
+            zip -r workflow.zip ${{ env.WORKFLOW_NAME }}/
+            echo "✅ Workflow package created successfully"
+            ls -la workflow.zip
+          else
+            echo "❌ Workflow folder '${{ env.WORKFLOW_NAME }}' not found"
+            exit 1
+          fi
+
+      - name: Configure Logic App Settings
+        run: |
+          echo "Configuring Logic App Settings for ${{ env.LOGIC_APP_NAME }}"
+          
+          # Set basic Logic App settings
+          az logicapp config appsettings set \
+            --name "${{ env.LOGIC_APP_NAME }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --settings \
+              WORKFLOWS_LOCATION_NAME="${{ env.TARGET_ENV_SHORT }}" \
+              AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" \
+              WEBSITE_CONTENTAZUREFILECONNECTIONSTRING="${{ secrets.STORAGE_CONNECTION_STRING }}"
+
       - name: Deploy Logic App Standard code
         run: |
+          echo "Deploying Logic App: ${{ env.LOGIC_APP_NAME }}"
+          
           az logicapp deployment source config-zip \
-            --name ${{ env.LOGIC_APP_NAME_PREFIX }} \
-            --resource-group ${{ env.RESOURCE_GROUP_NAME_PREFIX }} \
-            --src ${{ env.PROJECT_FOLDER_PATH }}/workflow.zip
+            --name "${{ env.LOGIC_APP_NAME }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --src "${{ env.PATH_REPO }}/${{ env.PROJECT_FOLDER_PATH }}/workflow.zip" \
+            --timeout ${{ env.TIMEOUT_MINUTES }}
+
+      - name: Enable Monitoring
+        if: env.ENABLE_MONITORING == 'true'
+        run: |
+          echo "Enabling monitoring for Logic App: ${{ env.LOGIC_APP_NAME }}"
+          
+          # Enable Application Insights if available
+          az logicapp config appsettings set \
+            --name "${{ env.LOGIC_APP_NAME }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --settings \
+              APPINSIGHTS_INSTRUMENTATIONKEY="${{ secrets.APPINSIGHTS_INSTRUMENTATIONKEY }}" \
+              APPLICATIONINSIGHTS_CONNECTION_STRING="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}"
+
+      - name: Confirm deployment
+        run: |
+          echo "🎉 Successfully deployed Logic App: ${{ env.LOGIC_APP_NAME }}"
+          echo "🔧 Workflow: ${{ env.WORKFLOW_NAME }}"
+          echo "🌐 Logic App URL: https://${{ env.LOGIC_APP_NAME }}.azurewebsites.net"
+          echo "🏷️ Environment: ${{ github.event.inputs.environment }}"
+          echo "📁 Resource Group: ${{ env.RESOURCE_GROUP }}"
+
+      - name: logout
+        run: |
+          az logout

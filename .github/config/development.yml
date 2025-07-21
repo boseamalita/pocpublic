@@ -11,6 +11,11 @@ azure:
   # Azure Functions configuration
   function_app_name: fatestpoc
   function_app_resource_group: POC
+
+  # Logic App configuration
+  logic_app_name: lapoctest01-dev
+  logic_app_resource_group: POC
+  logic_app_workflow_name: FileConversion
   
 app_settings:
   ASPNETCORE_ENVIRONMENT: Development
