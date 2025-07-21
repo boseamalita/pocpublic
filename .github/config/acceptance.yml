@@ -1,0 +1,30 @@
+environment:
+  name: Acceptance
+  short_name: acc
+  
+azure:
+  webapp_name: app-cospapi-case-pocpublic-acc
+  resource_group: rg-cosp-pocpublic-acc
+  subscription_id: "#{AZURE_SUBSCRIPTION_ID}#"
+  location: "West Europe"
+  
+app_settings:
+  ASPNETCORE_ENVIRONMENT: Acceptance
+  WEBSITE_RUN_FROM_PACKAGE: "1"
+  WEBSITE_ENABLE_SYNC_UPDATE_SITE: "true"
+  
+connection_strings:
+  DefaultConnection:
+    value: "#{ConnectionString-Acceptance}#"
+    type: SQLServer
+    
+deployment:
+  enable_health_check: true
+  health_check_path: "/health"
+  slot_name: "staging"
+  enable_blue_green: true
+  
+logging:
+  level: Warning
+  enable_application_insights: true
+  application_insights_key: "#{AppInsights-Key-Acc}#"

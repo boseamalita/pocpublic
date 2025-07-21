@@ -1,0 +1,37 @@
+environment:
+  name: Production
+  short_name: prd
+  
+azure:
+  webapp_name: app-cospapi-case-pocpublic-prd
+  resource_group: rg-cosp-pocpublic-prd
+  subscription_id: "#{AZURE_SUBSCRIPTION_ID}#"
+  location: "West Europe"
+  
+app_settings:
+  ASPNETCORE_ENVIRONMENT: Production
+  WEBSITE_RUN_FROM_PACKAGE: "1"
+  WEBSITE_ENABLE_SYNC_UPDATE_SITE: "true"
+  WEBSITE_NODE_DEFAULT_VERSION: "18.17.1"
+  
+connection_strings:
+  DefaultConnection:
+    value: "#{ConnectionString-Production}#"
+    type: SQLServer
+    
+deployment:
+  enable_health_check: true
+  health_check_path: "/health"
+  slot_name: "staging"
+  enable_blue_green: true
+  auto_swap: false
+  
+logging:
+  level: Error
+  enable_application_insights: true
+  application_insights_key: "#{AppInsights-Key-Prd}#"
+  
+security:
+  require_https: true
+  min_tls_version: "1.2"
+  enable_hsts: true

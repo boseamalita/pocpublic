@@ -18,7 +18,7 @@ env:
   LOGIC_APP_NAME_PREFIX: lapoctest01
   RESOURCE_GROUP_NAME_PREFIX: poc
   LOGIC_APP: FileConversion
-  PROJECT_FOLDER_PATH: CoSP.FileServices
+  PROJECT_FOLDER_PATH: CoSP.LogicApps
 
 jobs:
   deploy-to-target-environment:
@@ -63,6 +63,8 @@ jobs:
 
       - name: Build Logic App code
         run: |
+          # Create the zip with the correct folder structure
+          # The zip should contain the FileConversion folder and its contents
           cd ${{ env.PROJECT_FOLDER_PATH }}
           zip -r workflow.zip ${{ env.LOGIC_APP }}/
       

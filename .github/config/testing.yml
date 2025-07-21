@@ -1,0 +1,28 @@
+environment:
+  name: Development
+  short_name: dev
+  
+azure:
+  webapp_name: app-cospapi-case-pocpublic-dev
+  resource_group: rg-cosp-pocpublic-dev
+  subscription_id: "#{AZURE_SUBSCRIPTION_ID}#"
+  location: "West Europe"
+  
+app_settings:
+  ASPNETCORE_ENVIRONMENT: Development
+  WEBSITE_RUN_FROM_PACKAGE: "1"
+  
+connection_strings:
+  DefaultConnection:
+    value: "#{ConnectionString-Development}#"
+    type: SQLServer
+    
+deployment:
+  enable_health_check: true
+  health_check_path: "/health"
+  slot_name: "staging"
+  
+logging:
+  level: Debug
+  enable_application_insights: true
+  application_insights_key: "#{AppInsights-Key-Dev}#"

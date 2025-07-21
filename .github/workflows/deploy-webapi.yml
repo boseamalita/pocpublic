@@ -28,31 +28,61 @@ jobs:
     name: Deploy to ${{ github.event.inputs.environment }} environment
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
-    #permissions:
-      #id-token: write
-      #contents: read
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-      - name: Set Target Environment tag
-        run: |
-          case "${{ github.event.inputs.environment }}" in
-            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
-            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
-            Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
-            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
-            *)           echo "Unknown environment"; exit 1;;
-          esac
-
-      #- name: Cleanup workspace
-        #run: |
-          #rm -rf ./* || true
-          #rm -rf ./.??* || true
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           path: ${{ env.PATH_REPO }}
           lfs: false
+
+      - name: Load Environment Configuration
+        id: config
+        run: |
+          ENV_LOWER=$(echo "${{ github.event.inputs.environment }}" | tr '[:upper:]' '[:lower:]')
+          CONFIG_FILE="${{ env.PATH_REPO }}/.github/config/${ENV_LOWER}.yml"
+          
+          echo "Loading configuration from: $CONFIG_FILE"
+          
+          if [ -f "$CONFIG_FILE" ]; then
+            echo "✅ Config file found"
+            
+            # Install yq for YAML parsing
+            sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+            sudo chmod +x /usr/local/bin/yq
+            
+            # Extract configuration values
+            WEBAPP_NAME=$(yq e '.azure.webapp_name' "$CONFIG_FILE")
+            RESOURCE_GROUP=$(yq e '.azure.resource_group' "$CONFIG_FILE")
+            TARGET_ENV_SHORT=$(yq e '.environment.short_name' "$CONFIG_FILE")
+            ENABLE_HEALTH_CHECK=$(yq e '.deployment.enable_health_check' "$CONFIG_FILE")
+            HEALTH_CHECK_PATH=$(yq e '.deployment.health_check_path' "$CONFIG_FILE")
+            
+            echo "WEBAPP_NAME=$WEBAPP_NAME" >> $GITHUB_ENV
+            echo "RESOURCE_GROUP=$RESOURCE_GROUP" >> $GITHUB_ENV
+            echo "TARGET_ENV_SHORT=$TARGET_ENV_SHORT" >> $GITHUB_ENV
+            echo "ENABLE_HEALTH_CHECK=$ENABLE_HEALTH_CHECK" >> $GITHUB_ENV
+            echo "HEALTH_CHECK_PATH=$HEALTH_CHECK_PATH" >> $GITHUB_ENV
+            
+            echo "✅ Configuration loaded successfully"
+            echo "  - WebApp: $WEBAPP_NAME"
+            echo "  - Resource Group: $RESOURCE_GROUP"
+            echo "  - Environment: $TARGET_ENV_SHORT"
+          else
+            echo "❌ Config file not found, using fallback configuration"
+            # Fallback to original logic
+            case "${{ github.event.inputs.environment }}" in
+              Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+              Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+              Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+              Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+              *)           echo "Unknown environment"; exit 1;;
+            esac
+            echo "WEBAPP_NAME=${{ env.AZURE_WEBAPP_NAME }}-$TARGET_ENV_SHORT" >> $GITHUB_ENV
+          fi
       
       - name: Az Login
         uses: azure/login@v2
@@ -76,22 +106,63 @@ jobs:
       - name: Publish to Azure
         working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_WEBAPP }}
         run: |
-          APP_NAME="${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
-          mkdir -p "$APP_NAME"  # Ensure the directory exists
+          APP_NAME="${{ env.WEBAPP_NAME }}"
+          mkdir -p "$APP_NAME"
           dotnet publish -c Release --output "$APP_NAME"
         env:
-          AzureWebJobsScriptRoot: "."      
+          AzureWebJobsScriptRoot: "."
+          ASPNETCORE_ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+      - name: Configure App Settings
+        run: |
+          echo "Configuring App Settings for ${{ env.WEBAPP_NAME }}"
+          
+          # Set basic app settings
+          az webapp config appsettings set \
+            --name "${{ env.WEBAPP_NAME }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --settings \
+              ASPNETCORE_ENVIRONMENT="${{ github.event.inputs.environment }}" \
+              WEBSITE_RUN_FROM_PACKAGE="1" \
+              WEBSITE_ENABLE_SYNC_UPDATE_SITE="true"
       
       # Deploy to Azure Web apps
-      - name: 'Run Azure webapp deploy action using publish profile credentials'
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         with: 
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: '${{ env.FOLDER_WEBAPP }}/${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}'
-      
+          app-name: ${{ env.WEBAPP_NAME }}
+          package: '${{ env.FOLDER_WEBAPP }}/${{ env.WEBAPP_NAME }}'
+
+      - name: Health Check
+        if: env.ENABLE_HEALTH_CHECK == 'true'
+        run: |
+          HEALTH_URL="https://${{ env.WEBAPP_NAME }}.azurewebsites.net${{ env.HEALTH_CHECK_PATH }}"
+          
+          echo "🔍 Performing health check on: $HEALTH_URL"
+          
+          # Wait for deployment to complete
+          sleep 30
+          
+          # Perform health check with retry
+          for i in {1..5}; do
+            if curl -f -s "$HEALTH_URL" > /dev/null 2>&1; then
+              echo "✅ Health check passed!"
+              break
+            else
+              echo "⚠️ Health check failed, attempt $i/5"
+              if [ $i -eq 5 ]; then
+                echo "❌ Health check failed after 5 attempts"
+                exit 1
+              fi
+              sleep 30
+            fi
+          done
+
       - name: Confirm deployment
         run: |
-          echo "Deployed to Web App: ${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
+          echo "🎉 Successfully deployed to: ${{ env.WEBAPP_NAME }}"
+          echo "🌐 Application URL: https://${{ env.WEBAPP_NAME }}.azurewebsites.net"
+          echo "🏷️ Environment: ${{ github.event.inputs.environment }}"
       
       - name: logout
         run: |
