@@ -3,6 +3,7 @@ environment:
   short_name: dev
   
 azure:
+  # Web API configuration
   webapp_name: app-cospapi-case-pocpublic-dev
   resource_group: POC
   subscription_id: "#{AZURE_SUBSCRIPTION_ID}#"
