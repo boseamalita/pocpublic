@@ -143,7 +143,7 @@ jobs:
           az logicapp deployment source config-zip \
             --name "${{ env.LOGIC_APP_NAME }}" \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
-            --src "${{ env.PATH_REPO }}/${{ env.PROJECT_FOLDER_PATH }}/workflow.zip" \
+            --src "${{ env.PROJECT_FOLDER_PATH }}/workflow.zip" \
             --timeout ${{ env.TIMEOUT_MINUTES }}
 
       - name: Enable Monitoring
