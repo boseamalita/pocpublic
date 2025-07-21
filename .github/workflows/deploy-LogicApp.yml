@@ -134,8 +134,7 @@ jobs:
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --settings \
               WORKFLOWS_LOCATION_NAME="${{ env.TARGET_ENV_SHORT }}" \
-              AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" \
-              WEBSITE_CONTENTAZUREFILECONNECTIONSTRING="${{ secrets.STORAGE_CONNECTION_STRING }}"
+              AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
 
       - name: Deploy Logic App Standard code
         run: |
