@@ -3,10 +3,10 @@ environment:
   short_name: dev
   
 azure:
-  webapp_name: app-cospapi-case-pocpublic-dev
-  resource_group: rg-cosp-pocpublic-dev
+  webapp_name: app-cospapi-case-pocpublic
+  resource_group: POC
   subscription_id: "#{AZURE_SUBSCRIPTION_ID}#"
-  location: "West Europe"
+  location: "South India"
   
 app_settings:
   ASPNETCORE_ENVIRONMENT: Development
