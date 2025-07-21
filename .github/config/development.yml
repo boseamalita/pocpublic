@@ -8,6 +8,10 @@ azure:
   subscription_id: "#{AZURE_SUBSCRIPTION_ID}#"
   location: "South India"
   
+  # Azure Functions configuration
+  function_app_name: fatestpoc
+  function_app_resource_group: POC
+  
 app_settings:
   ASPNETCORE_ENVIRONMENT: Development
   WEBSITE_RUN_FROM_PACKAGE: "1"
