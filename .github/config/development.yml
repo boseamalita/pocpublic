@@ -18,7 +18,7 @@ connection_strings:
     type: SQLServer
     
 deployment:
-  enable_health_check: true
+  enable_health_check: false
   health_check_path: "/health"
   
 logging:
