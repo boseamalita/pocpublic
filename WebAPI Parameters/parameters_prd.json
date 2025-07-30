@@ -1,0 +1,6 @@
+{
+  "ASPNETCORE_ENVIRONMENT": {
+    "type": "String",
+    "value": "Production"
+  }
+}

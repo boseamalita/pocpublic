@@ -1,0 +1,18 @@
+{
+  "WEBAPP_NAME": {
+    "type": "String",
+    "value": "app-cospapi-case-pocpublic-dev"
+  },
+  "RESOURCE_GROUP": {
+    "type": "String",
+    "value": "POC"
+  },
+  "ASPNETCORE_ENVIRONMENT": {
+    "type": "String",
+    "value": "Development"
+  },
+  "AZURE_CLIENT_ID": {
+    "type": "String",
+    "value": "1"
+  }
+}
