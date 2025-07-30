@@ -81,8 +81,6 @@ jobs:
 
       - name: Configure App Settings
         run: |
-          echo "Configuring App Settings for ${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
-          
           # Set basic app settings
           az webapp config appsettings set \
             --name "${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}" \

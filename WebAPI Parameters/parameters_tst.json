@@ -1,6 +1,0 @@
-{
-  "ASPNETCORE_ENVIRONMENT": {
-    "type": "String",
-    "value": "Testing"
-  }
-}

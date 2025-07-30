@@ -20,6 +20,8 @@ permissions:
 env:
   PATH_REPO: ./
   FOLDER_FUNCTION: CoSP.AzFunctions
+  FUNCTION_APP_NAME: fatestpoc-dev
+  RESOURCE_GROUP: POC
 
 jobs:
   deploy-to-target-environment:
@@ -37,52 +39,27 @@ jobs:
           path: ${{ env.PATH_REPO }}
           lfs: false
 
+      - name: Set Target Environment tag
+        run: |
+          case "${{ github.event.inputs.environment }}" in
+            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+            Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+            *)           echo "Unknown environment"; exit 1;;
+          esac          
+      
       - name: Load Environment Configuration
         id: config
-        run: |
-          ENV_LOWER=$(echo "${{ github.event.inputs.environment }}" | tr '[:upper:]' '[:lower:]')
-          CONFIG_FILE="${{ env.PATH_REPO }}/.github/config/${ENV_LOWER}.yml"
+        run: |          
+          CONFIG_FILE="${{ env.PATH_REPO }}/Function App Parameters/parameters_${{ env.TARGET_ENV_SHORT }}.json"
+                    
+          # Install jq for JSON parsing
+          sudo apt-get update && sudo apt-get install -y jq
           
-          echo "Loading configuration from: $CONFIG_FILE"
-          
-          if [ -f "$CONFIG_FILE" ]; then
-            echo "✅ Config file found"
-            
-            # Install yq for YAML parsing
-            sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-            sudo chmod +x /usr/local/bin/yq
-            
-            # Extract configuration values
-            FUNCTION_APP_NAME=$(yq e '.azure.function_app_name' "$CONFIG_FILE")
-            RESOURCE_GROUP=$(yq e '.azure.function_app_resource_group' "$CONFIG_FILE")
-            TARGET_ENV_SHORT=$(yq e '.environment.short_name' "$CONFIG_FILE")
-            ENABLE_HEALTH_CHECK=$(yq e '.deployment.function_deployment.enable_health_check' "$CONFIG_FILE")
-            HEALTH_CHECK_PATH=$(yq e '.deployment.function_deployment.health_check_path' "$CONFIG_FILE")
-            TIMEOUT_MINUTES=$(yq e '.deployment.function_deployment.timeout_minutes' "$CONFIG_FILE")
-            
-            echo "FUNCTION_APP_NAME=$FUNCTION_APP_NAME" >> $GITHUB_ENV
-            echo "RESOURCE_GROUP=$RESOURCE_GROUP" >> $GITHUB_ENV
-            echo "TARGET_ENV_SHORT=$TARGET_ENV_SHORT" >> $GITHUB_ENV
-            echo "ENABLE_HEALTH_CHECK=$ENABLE_HEALTH_CHECK" >> $GITHUB_ENV
-            echo "HEALTH_CHECK_PATH=$HEALTH_CHECK_PATH" >> $GITHUB_ENV
-            echo "TIMEOUT_MINUTES=$TIMEOUT_MINUTES" >> $GITHUB_ENV
-            
-            echo "✅ Configuration loaded successfully"
-            echo "  - Function App: $FUNCTION_APP_NAME"
-            echo "  - Resource Group: $RESOURCE_GROUP"
-            echo "  - Environment: $TARGET_ENV_SHORT"
-          else
-            echo "❌ Config file not found, using fallback configuration"
-            # Fallback to original logic
-            case "${{ github.event.inputs.environment }}" in
-              Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
-              Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
-              Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
-              Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
-              *)           echo "Unknown environment"; exit 1;;
-            esac
-            echo "FUNCTION_APP_NAME=fatestpoc-$TARGET_ENV_SHORT" >> $GITHUB_ENV
-          fi
+          # Extract configuration values from JSON parameters
+          COSP_SYNCENGINE_CERTIFICATE=$(jq -r '.CoSP_SyncEngine_Certificate.value' "$CONFIG_FILE")
+         
 
       - name: Verify .NET SDK
         run: |
@@ -118,12 +95,12 @@ jobs:
               FUNCTIONS_WORKER_RUNTIME="powershell" \
               FUNCTIONS_EXTENSION_VERSION="~4" \
               WEBSITE_RUN_FROM_PACKAGE="1" \
-              ASPNETCORE_ENVIRONMENT="${{ github.event.inputs.environment }}"
-      
+              AZURE_FUNCTIONS_ENVIRONMENT="${{ github.event.inputs.environment }}" \
+              CoSP_SyncEngine_Certificate="${{ env.COSP_SYNCENGINE_CERTIFICATE }}"
+
       - name: Publish to Azure
         working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
         run: |
-          echo "Publishing Function App: ${{ env.FUNCTION_APP_NAME }}"
           func azure functionapp publish "${{ env.FUNCTION_APP_NAME }}" --powershell
         env:
           AzureWebJobsScriptRoot: "."
@@ -131,9 +108,6 @@ jobs:
       - name: Confirm deployment
         run: |
           echo "🎉 Successfully deployed Function App: ${{ env.FUNCTION_APP_NAME }}"
-          echo "🌐 Function App URL: https://${{ env.FUNCTION_APP_NAME }}.azurewebsites.net"
-          echo "🏷️ Environment: ${{ github.event.inputs.environment }}"
-          echo "📁 Resource Group: ${{ env.RESOURCE_GROUP }}"
 
       - name: logout
         run: |
