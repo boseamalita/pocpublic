@@ -8,10 +8,10 @@ on:
         required: true
         type: choice
         options:
-          - Development
-          - Testing
-          - Acceptance
-          - Production
+          - FODJ-DEV
+          - FODJ-TST
+          - FODJ-ACC
+          - FODJ-PRD
 
 permissions:
       id-token: write
@@ -42,10 +42,10 @@ jobs:
       - name: Set Target Environment tag
         run: |
           case "${{ github.event.inputs.environment }}" in
-            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
-            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
-            Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
-            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+            FODJ-DEV) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+            FODJ-TST)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+            FODJ-ACC)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+            FODJ-PRD)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
             *)           echo "Unknown environment"; exit 1;;
           esac          
       
