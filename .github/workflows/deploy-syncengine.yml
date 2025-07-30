@@ -20,7 +20,7 @@ permissions:
 env:
   PATH_REPO: ./
   FOLDER_FUNCTION: CoSP.AzFunctions
-  FUNCTION_APP_NAME: fatestpoc-dev
+  FUNCTION_APP_NAME: fatestpoc
   RESOURCE_GROUP: POC
 
 jobs:
