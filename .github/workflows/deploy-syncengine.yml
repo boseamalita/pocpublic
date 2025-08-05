@@ -59,21 +59,10 @@ jobs:
           
           # Extract configuration values from JSON parameters
           COSP_SYNCENGINE_CERTIFICATE=$(jq -r '.CoSP_SyncEngine_Certificate.value' "$CONFIG_FILE")
-         
-
-      - name: Verify .NET SDK
-        run: |
-          command -v dotnet >/dev/null 2>&1 || { echo ".NET SDK not found; install on runner"; exit 1; }
-          dotnet --version
 
       - name: Install Azure Functions Core Tools
         run: |
           npm install -g azure-functions-core-tools@4 --unsafe-perm true
-      
-      - name: Verify Core Tools
-        run: |
-          command -v func >/dev/null 2>&1 || { echo "Azure Functions Core Tools not found; install on runner"; exit 1; }
-          func --version
 
       - name: Az Login
         uses: azure/login@v2
