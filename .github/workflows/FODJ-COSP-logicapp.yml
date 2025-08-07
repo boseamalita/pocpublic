@@ -21,7 +21,7 @@ env:
   PATH_REPO: ./
   PROJECT_FOLDER_PATH: JMP.CoSP/JMP.CoSP.FileServices
   WORKFLOW_NAME: FileConversion
-  LOGIC_APP_NAME: logic-dpa-case
+  LOGIC_APP_NAME: lapoctest01
   PATH_DEPLOY: deploy
 
 jobs:
@@ -77,14 +77,14 @@ jobs:
       - name: Upload the deployment zip to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.LOGIC_APP_NAME }}-${{ env.TARGET_ENV_SHORT }}
+          name: ${{ env.LOGIC_APP_NAME }}
           path: to_deploy.zip
           overwrite: true
 
       - name: Deploy logic app zip to target azure environment
         uses: azure/functions-action@v1
         with:
-          app-name: '${{ env.LOGIC_APP_NAME }}-${{ env.TARGET_ENV_SHORT }}'
+          app-name: '${{ env.LOGIC_APP_NAME }}'
           package: to_deploy.zip
 
       - name: Build Logic App code
@@ -98,7 +98,7 @@ jobs:
 
       - name: Confirm deployment
         run: |
-          echo "🎉 Successfully deployed Logic App: ${{ env.LOGIC_APP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
+          echo "🎉 Successfully deployed Logic App: ${{ env.LOGIC_APP_NAME }}"
 
       - name: logout
         run: |
