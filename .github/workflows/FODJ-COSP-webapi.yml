@@ -18,11 +18,11 @@ permissions:
       contents: read
 
 env:
-  AZURE_WEBAPP_NAME: app-cospapi-case    # Set this to your application's name
+  AZURE_WEBAPP_NAME: app-cospapi-case-pocpublic    # Set this to your application's name
   DOTNET_VERSION: '8.0.x'  
   PATH_REPO:  ./
   FOLDER_WEBAPP: JMP.CoSP/JMP.CoSP.WebApi
-  RESOURCE_GROUP: rg-cosp-case
+  RESOURCE_GROUP: POC
 
 jobs:
   deploy-to-target-environment:
@@ -84,7 +84,7 @@ jobs:
           # Set basic app settings
           az webapp config appsettings set \
             --name "${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}" \
-            --resource-group "${{ env.RESOURCE_GROUP }}-${{ env.TARGET_ENV_SHORT }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
             --settings \
               ASPNETCORE_ENVIRONMENT="${{ github.event.inputs.environment }}" \
               WEBSITE_RUN_FROM_PACKAGE="1" \
