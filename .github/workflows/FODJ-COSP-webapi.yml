@@ -74,7 +74,7 @@ jobs:
         run: |
           APP_NAME="${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
           mkdir -p "$APP_NAME"
-          dotnet publish ${{ env.FOLDER_WEBAPP }}.csproj -c Release --output "$APP_NAME"
+          dotnet publish my-dotnet8-webapi.csproj -c Release --output "$APP_NAME"
         env:
           AzureWebJobsScriptRoot: "."
           ASPNETCORE_ENVIRONMENT: ${{ github.event.inputs.environment }}
