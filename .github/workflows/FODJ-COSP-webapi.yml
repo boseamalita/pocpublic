@@ -1,0 +1,106 @@
+name: Deploy FODJ CoSP Web API
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - Development
+          - Testing
+          - Acceptance
+          - Production
+
+permissions:
+      id-token: write
+      contents: read
+
+env:
+  AZURE_WEBAPP_NAME: app-cospapi-case    # Set this to your application's name
+  DOTNET_VERSION: '8.0.x'  
+  PATH_REPO:  ./
+  FOLDER_WEBAPP: JMP.CoSP/JMP.CoSP.WebApi
+  RESOURCE_GROUP: rg-cosp-case
+
+jobs:
+  deploy-to-target-environment:
+    name: Deploy to ${{ github.event.inputs.environment }} environment
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.PATH_REPO }}
+          lfs: false
+      
+      - name: Set Target Environment tag
+        run: |
+          case "${{ github.event.inputs.environment }}" in
+            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+            Acceptance)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+            *)           echo "Unknown environment"; exit 1;;
+          esac          
+      
+      - name: Az Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Setup .NET Core SDK
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }} 
+      
+      - name: Build project
+        working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_WEBAPP }}
+        run: |
+          dotnet clean
+          dotnet build --configuration Release
+
+      - name: Publish to Azure
+        working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_WEBAPP }}
+        run: |
+          APP_NAME="${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
+          mkdir -p "$APP_NAME"
+          dotnet publish ${{ env.FOLDER_WEBAPP }}.csproj -c Release --output "$APP_NAME"
+        env:
+          AzureWebJobsScriptRoot: "."
+          ASPNETCORE_ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+      - name: Configure App Settings
+        run: |
+          # Set basic app settings
+          az webapp config appsettings set \
+            --name "${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}-${{ env.TARGET_ENV_SHORT }}" \
+            --settings \
+              ASPNETCORE_ENVIRONMENT="${{ github.event.inputs.environment }}" \
+              WEBSITE_RUN_FROM_PACKAGE="1" \
+              WEBSITE_ENABLE_SYNC_UPDATE_SITE="true"
+      
+      # Deploy to Azure Web apps
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        with: 
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}
+          package: '${{ env.FOLDER_WEBAPP }}/${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}'
+
+      - name: Confirm deployment
+        run: |
+          echo "🎉 Successfully deployed to: ${{ env.AZURE_WEBAPP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
+      
+      - name: logout
+        run: |
+          az logout

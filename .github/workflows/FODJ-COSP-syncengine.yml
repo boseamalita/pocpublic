@@ -1,0 +1,77 @@
+name: Deploy FODJ CoSP Function App
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - Development
+          - Testing
+          - Acceptance
+          - Production
+
+permissions:
+      id-token: write
+      contents: read
+
+env:
+  PATH_REPO: ./
+  FOLDER_FUNCTION: JMP.CoSP/CoSP.AzFunctions
+  FUNCTION_APP_NAME: fun-cosptranslations-case
+  RESOURCE_GROUP: rg-cosp-case
+
+jobs:
+  deploy-to-target-environment:
+    name: Deploy to ${{ github.event.inputs.environment }} environment
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.PATH_REPO }}
+          lfs: false
+
+      - name: Set Target Environment tag
+        run: |
+          case "${{ github.event.inputs.environment }}" in
+            Development) echo "TARGET_ENV_SHORT=dev" >> $GITHUB_ENV;;
+            Testing)     echo "TARGET_ENV_SHORT=tst" >> $GITHUB_ENV;;
+            Staging)  echo "TARGET_ENV_SHORT=acc" >> $GITHUB_ENV;;
+            Production)  echo "TARGET_ENV_SHORT=prd" >> $GITHUB_ENV;;
+            *)           echo "Unknown environment"; exit 1;;
+          esac          
+      
+      - name: Install Azure Functions Core Tools
+        run: |
+          npm install -g azure-functions-core-tools@4 --unsafe-perm true
+
+      - name: Az Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: Publish to Azure
+        working-directory: ${{ env.PATH_REPO }}/${{ env.FOLDER_FUNCTION }}
+        run: |
+          func azure functionapp publish "${{ env.FUNCTION_APP_NAME }}-${{ env.TARGET_ENV_SHORT }}" --powershell
+        env:
+          AzureWebJobsScriptRoot: "."
+
+      - name: Confirm deployment
+        run: |
+          echo "🎉 Successfully deployed Function App: ${{ env.FUNCTION_APP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
+
+      - name: logout
+        run: |
+          az logout

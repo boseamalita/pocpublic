@@ -1,0 +1,10 @@
+{
+  "AZURE_FUNCTIONS_ENVIRONMENT": {
+    "type": "String",
+    "value": "Testing"
+  },
+  "CoSP_SyncEngine_Certificate": {
+    "type": "String",
+    "value": "@Microsoft.KeyVault(SecretUri=https://your-keyvault-name.vault.azure.net/certificates/CertificateName/)"
+  }
+}

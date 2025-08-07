@@ -1,4 +1,4 @@
-name: Deploy Azure Logic App
+name: Deploy FODJ CoSP Logic App
 
 on:
   workflow_dispatch:
@@ -19,9 +19,9 @@ permissions:
 
 env:
   PATH_REPO: ./
-  PROJECT_FOLDER_PATH: CoSP.LogicApps
+  PROJECT_FOLDER_PATH: JMP.CoSP/JMP.CoSP.FileServices
   WORKFLOW_NAME: FileConversion
-  LOGIC_APP_NAME: lapoctest01
+  LOGIC_APP_NAME: logic-dpa-case
   PATH_DEPLOY: deploy
 
 jobs:
@@ -98,7 +98,7 @@ jobs:
 
       - name: Confirm deployment
         run: |
-          echo "🎉 Successfully deployed Logic App: ${{ env.LOGIC_APP_NAME }}"
+          echo "🎉 Successfully deployed Logic App: ${{ env.LOGIC_APP_NAME }}-${{ env.TARGET_ENV_SHORT }}"
 
       - name: logout
         run: |

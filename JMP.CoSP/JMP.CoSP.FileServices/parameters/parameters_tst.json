@@ -1,0 +1,14 @@
+{
+  "CoSPFileServiceInLibName": {
+    "type": "String",
+    "value": "InWordFile"
+  },
+  "CoSPFileServiceOutLibName": {
+    "type": "String",
+    "value": "OutPDFFile"
+  },
+  "CoSPFileServiceSiteUrl": {
+    "type": "String",
+    "value": "https://federaljusticebelgium.sharepoint.com/sites/cosp-fileservice-tst"
+  }
+}
