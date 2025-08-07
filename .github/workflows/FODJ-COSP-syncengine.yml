@@ -19,7 +19,7 @@ permissions:
 
 env:
   PATH_REPO: ./
-  FOLDER_FUNCTION: JMP.CoSP/CoSP.AzFunctions
+  FOLDER_FUNCTION: JMP.CoSP/JMP.CoSP.AzFunctions
   FUNCTION_APP_NAME: fatestpoc
 
 jobs:
